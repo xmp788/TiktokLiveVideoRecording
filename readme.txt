@@ -23,15 +23,3 @@ gevent subprocess
 观看实时直播需要安装 pip install screeninfo 用于获取你屏幕尺寸，计算出直播窗口所在位置
 如安装库缓慢：可以先下载‘自动添加阿里镜像站.py’,运行将会为你自动阿里镜像地址，再次运行将会删除阿里镜像地址
 
-…or create a new repository on the command line
-echo "# TiktokLiveVideoRecording" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin git@github.com:xmp788/TiktokLiveVideoRecording.git
-git push -u origin main
-…or push an existing repository from the command line
-git remote add origin git@github.com:xmp788/TiktokLiveVideoRecording.git
-git branch -M main
-git push -u origin main
