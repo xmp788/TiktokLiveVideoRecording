@@ -52,7 +52,7 @@ def getConfig():
       gevent.joinall([gevent.spawn(MonitoringLive,key,value)])
       if not mode['ScanList']:
          break
-    if not mode['MonirtingLive']:# 是否监控所有列表直播状态
+    if not mode['MonirtingLive']:# 是否监视所有列表直播状态
       break
     # else:
     #   time.sleep(10)
@@ -60,9 +60,9 @@ def getConfig():
 if __name__ == "__main__":
   # 程序执行方式
   mode={
-    'ScanList':1, # 是否监控所有地址，1：开启，0：关闭（调试程序用）
-    'MonirtingLive':1, # 是否循环监控所有地址
-    'RecordVideo':1 # 是否开启录制模式，1：开启，0：关闭，即只监控状态不录制视频
+    'ScanList':1, # 是否监视所有地址，1：开启，0：关闭（调试程序用）
+    'MonirtingLive':1, # 是否循环监视所有地址
+    'RecordVideo':1 # 是否开启录制模式，1：开启，0：关闭，即只监视状态不录制视频
   }
   core.rec_somebody_lis=['一颗心','喜喜'] # 需要录制视频的主播，不需要录制无需添加（地址文件对应的备注）
   getConfig()
