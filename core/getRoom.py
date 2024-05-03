@@ -147,7 +147,7 @@ def RecordingFunc(datas):# 备注，昵称，直播流
     def ffmepg_command(urls,fileFullname,txt):
       """录制命令"""    
       # cmd = [str(core.fileName('ffmpeg.exe')), "-y","-re",
-      cmd = [str('{core.thisPath}/ffmpeg/ffmpeg.exe'), "-y","-re",
+      cmd = [str(f'{core.thisPath}/ffmpeg/ffmpeg.exe'), "-y","-re",
               "-v","verbose", 
               "-timeout","2000",
               "-loglevel","error",
