@@ -71,13 +71,7 @@ def getRoomInfo(url,notes='未添加备注'):
         'status':resqJson['data']['room']['status'],# 开播状态：4未开播，2开播
         'start_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['start_time'])),
         'create_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['create_time'])),# 开播时间
-        'finish_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['finish_time']))# 现在时间
-      })
-      resqJson = netWork(live_info_url(resqJson['data']['room']['owner']["own_room"]["room_ids_str"][0]),urlparams=True)        
-      uData.update({
-        'modify_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['owner']['modify_time'])),
-        'follower_count':resqJson['data']['room']['owner']['follow_info']['follower_count'],
-        # 'follower_count_str':resqJson['data']['room']['owner']['follow_info']['follower_count_str'],
+        'finish_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['finish_time'])),# 现在时间
         'display_id':resqJson['data']['room']['owner']['display_id'],
         'sec_uid':resqJson['data']['room']['owner']['sec_uid'],
         'web_rid':resqJson['data']['room']['owner']['web_rid'],# '308601070381'
@@ -88,6 +82,13 @@ def getRoomInfo(url,notes='未添加备注'):
         'signature':resqJson['data']['room']['owner']['signature'],
         'pay_grade':resqJson['data']['room']['owner']['pay_grade'],
         'p_level':resqJson['data']['room']['owner']['pay_grade']['level'],# 财富等级
+        'stats':resqJson['data']['room']['stats'],
+      })
+      resqJson = netWork(live_info_url(resqJson['data']['room']['owner']["own_room"]["room_ids_str"][0]),urlparams=True)        
+      uData.update({
+        'modify_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['owner']['modify_time'])),
+        'follower_count':resqJson['data']['room']['owner']['follow_info']['follower_count'],
+        # 'follower_count_str':resqJson['data']['room']['owner']['follow_info']['follower_count_str'],
 
         'is_virtual_anchor':resqJson['data']['room']['extra']['is_virtual_anchor'],
         'flv_rtmp':resqJson['data']['room']['stream_url']['rtmp_pull_url'],
@@ -97,7 +98,6 @@ def getRoomInfo(url,notes='未添加备注'):
         # 'total_user_str':resqJson['data']['room']['stats']['total_user_str'],
         'user_count_str':resqJson['data']['room']['stats']['user_count_str'],
         
-        'stats':resqJson['data']['room']['stats'],
         'stream_url':resqJson['data']['room']['stream_url'],
         'user_dress_info':resqJson['data']['room']['owner']['user_dress_info'],
         'user':resqJson['data']['user'],
@@ -172,7 +172,7 @@ def RecordingFunc(datas):# 备注，昵称，直播流
     def ffP(txt):
       from screeninfo import get_monitors
       wid,hei=get_monitors()[0].width,get_monitors()[0].height  # 获取屏幕尺寸
-      x=230 # 设置直播画面大小
+      x=20 # 设置直播画面大小
       volume=2 # 设置直播初始音量
       setMode=f'{core.thisPath}/ffmpeg/ffplay.exe -volume {volume} -x {x} -vf {txt} -hide_banner -autoexit -window_title {datas[1]} -left {wid-x} -noborder'
       subprocess.Popen(f'{setMode} {datas[2]}')
@@ -189,7 +189,7 @@ def RecordingFunc(datas):# 备注，昵称，直播流
     try:
       # 记录录制时间,标记正在录制状态
       core.Obj[datas[0]]['recoding'],core.Obj[datas[0]]['rec_stime']=True,datetime.now()      
-      threading.Thread(target=Rec_ing,args=(cmd,)).start()# 创建录制视频线程
+      # threading.Thread(target=Rec_ing,args=(cmd,)).start()# 创建录制视频线程
       threading.Thread(target=ffP,args=(txt,)).start()# 创建ffplay播放线程
       # 创建子进程,使用ffpaly播放开播提醒音
       subprocess.Popen(f'{core.thisPath}/ffmpeg/ffplay.exe -nodisp -volume 3 -autoexit -i {core.thisPath}/sound/notify_message.mp3')
@@ -210,8 +210,8 @@ def MonitoringLive(notes,url):
   # 控制台输出状态信息
   if roomInfo['Living']:# 判断当前主播是否开播
     print(f'{notes:{"`"}{"<"}{10}}{roomInfo["msg"]},{roomInfo["userCount"]}/{roomInfo["total_userCount"]},{roomInfo["city"]},{roomInfo["flv_rtmp"]}')
-    if core.mode['RecordVideo']: #判断是否启用录制模式
-      if notes.split('.')[1] in core.rec_somebody_lis:#判断当前主播是是否在录制人员列表中
+    if notes.split('.')[1] in core.rec_somebody_lis:#判断当前主播是是否在录制人员列表中
+      if core.mode['RecordVideo']: #判断是否启用录制模式
         info=(notes,roomInfo['nickname'],roomInfo['flv_rtmp'])# 备注，昵称，直播流
         RecordingFunc(info)
   else:
