@@ -9,5 +9,5 @@ def data_replace(receiveData:str) -> str:
   script_str=json.loads(scriData[len(scriData)-1])
   script_str=json.loads(script_str[1].split(':',1)[1])
   script_str=json.dumps(script_str[3])
-
+  
   return script_str
