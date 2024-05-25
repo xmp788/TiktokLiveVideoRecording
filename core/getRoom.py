@@ -69,9 +69,9 @@ def getRoomInfo(url,notes='未添加备注'):
       resqJson=netWork(LiveInfoURL,urlparams=True)
       uData.update({
         'status':resqJson['data']['room']['status'],# 开播状态：4未开播，2开播
-        'start_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['start_time'])),
-        'create_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['create_time'])),# 开播时间
-        'finish_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['finish_time'])),# 现在时间
+        # 'start_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['start_time'])),
+        # 'create_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['create_time'])),# 开播时间
+        # 'finish_time':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(resqJson['data']['room']['finish_time'])),# 现在时间
         'display_id':resqJson['data']['room']['owner']['display_id'],
         'sec_uid':resqJson['data']['room']['owner']['sec_uid'],
         'web_rid':resqJson['data']['room']['owner']['web_rid'],# '308601070381'
@@ -108,7 +108,7 @@ def getRoomInfo(url,notes='未添加备注'):
       })
       # print(self_data)
       if uData['status']==4:
-        uData['Living'],uData['msg']=True,'正在直播'
+        uData['Living'],uData['msg']=True,'正在直播……'
       else:
         uData['Living'],uData['msg'],uData['flv_rtmp']=False,'未开播',""
 
@@ -129,9 +129,7 @@ def RecordingFunc(datas):# 备注，昵称，直播流
   if not core.Obj[datas[0]]['recoding']:
     # 文件标题
     def titleFilter(liveFileName: str):
-      """
-      转为Windows合法文件名  
-      """
+      """转为Windows合法文件名"""
       # 非法字符
       lst = ['\r', '\n', '\\', '/', ':', '*', '?', '"', '<', '>', '|']
       # 非法字符处理方式1
@@ -144,10 +142,10 @@ def RecordingFunc(datas):# 备注，昵称，直播流
       if len(liveFileName) > 60:
           liveFileName = liveFileName[:60]
       return liveFileName.strip()
-    def ffmepg_command(urls,fileFullname,txt):
+    
+    def Rec_ing(urls,fileFullname,vf):
       """录制命令"""    
-      # cmd = [str(core.fileName('ffmpeg.exe')), "-y","-re",
-      cmd = [str(f'{core.thisPath}/ffmpeg/ffmpeg.exe'), "-y","-re",
+      cmd = [str(f'{core.thisPath}/ffmpeg/ffmpeg.exe'),"-re","-y",
               "-v","verbose", 
               "-timeout","2000",
               "-loglevel","error",
@@ -156,41 +154,53 @@ def RecordingFunc(datas):# 备注，昵称，直播流
               "-analyzeduration","2147483647",
               "-probesize","2147483647",
               "-i",urls,
-              "-vf",txt,
+              "-vf",vf,
               '-bufsize','5000k',
               "-map","0",
               "-sn","-dn",
               '-max_muxing_queue_size','64',
               str(fileFullname)]
-      return cmd
-    def Rec_ing(cmd):
       print(f'{msg}开始录制视频……')
       logger.info(f'{msg}开始录制视频……')
       subprocess.Popen(cmd).wait()# 录制
       core.Obj[datas[0]]['rec_etime'],core.Obj[datas[0]]['recoding']=datetime.now(),False
       logger.info(f"{msg}直播结束!停止录制！！！{msg}已成功录制:{core.Obj[datas[0]]['rec_etime']-core.Obj[datas[0]]['rec_stime']}")
-    def ffP(txt):
+    def ffP(vf):
       from screeninfo import get_monitors
       wid,hei=get_monitors()[0].width,get_monitors()[0].height  # 获取屏幕尺寸
-      x=20 # 设置直播画面大小
-      volume=2 # 设置直播初始音量
-      setMode=f'{core.thisPath}/ffmpeg/ffplay.exe -volume {volume} -x {x} -vf {txt} -hide_banner -autoexit -window_title {datas[1]} -left {wid-x} -noborder'
-      subprocess.Popen(f'{setMode} {datas[2]}')
-    
+      x=230
+      ffplayCMD=[f'{core.thisPath}/ffmpeg/ffplay.exe',
+                  '-volume',str(2),# 设置直播初始音量
+                  '-x',f'{x}',# 设置直播画面大小
+                  '-left',f'{wid-x}',# 位置
+                  '-vf',vf,# 过滤器(水印)
+                  '-autoexit',# 播放结束后自动退出
+                  '-window_title',datas[1],# 设置标题
+                  # '-vn',# 无视频
+                  # '-nodisp',# 无输出画面
+                  # '-hide_banner',
+                  '-noborder',# 设置为无边框
+                  '-i',datas[2]]# 输入源
+      subprocess.Popen(ffplayCMD)
+
     # 定义时间水印
-    txt="drawtext=fontsize=50:fontfile=FreeSerif.ttf:fontcolor=red:text='%{localtime\:%Y\-%m\-%d_%H\\\\\:%M\\\\\:%S}':x=main_w-text_w-25:y=25"
+    timeWatermark=":".join(["drawtext=text='%{localtime}'",
+         f"fontfile={core.thisPath}/ffmpeg/FreeSerif.ttf",
+         "fontsize=50",
+         "fontcolor=red",
+         "x=main_w-text_w-25",
+         "y=25"])
     fileN=f'{time.strftime("%Y-%m-%d_%H-%M-%S")}.mp4'
     # fileDirName=titleFilter(datas[0].split('.')[1])#保存文件名       
     fileDirName=titleFilter(datas[1])#保存文件名       
     makedir = core.RecordDir/fileDirName#dir 前面读取配置文件获得
     makedir.mkdir(parents=True,exist_ok=True) # 创建文件夹
     path = makedir/fileN # 文件保存路径
-    cmd=ffmepg_command(datas[2],path,txt)
     try:
       # 记录录制时间,标记正在录制状态
       core.Obj[datas[0]]['recoding'],core.Obj[datas[0]]['rec_stime']=True,datetime.now()      
-      # threading.Thread(target=Rec_ing,args=(cmd,)).start()# 创建录制视频线程
-      threading.Thread(target=ffP,args=(txt,)).start()# 创建ffplay播放线程
+      # threading.Thread(target=Rec_ing,args=(datas[2],path,timeWatermark)).start()# 创建录制视频线程
+      threading.Thread(target=ffP,args=(timeWatermark,)).start()# 创建ffplay播放线程
       # 创建子进程,使用ffpaly播放开播提醒音
       subprocess.Popen(f'{core.thisPath}/ffmpeg/ffplay.exe -nodisp -volume 3 -autoexit -i {core.thisPath}/sound/notify_message.mp3')
     except Exception as e:
