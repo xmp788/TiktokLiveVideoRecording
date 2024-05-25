@@ -16,11 +16,10 @@
     程序在运动时，MonitoringAddress.jsonm内容支持动态更改，无需重新运行程序
     不要问我会为什么要用.json命名，问就是为VScode快捷键方便注释掉不需要监听的地址，这种存放监听地址方式只在暂时使用，后期随着程序的完善会被遗弃！
 2.  只录制指定的主播,指定方式详请查看入口文件0.0.3gevent_joinall.py 第67行代码
-    只观看不录制，请注释掉core/getRoom.py文件 第192行
+    只观看不录制，请注释掉core/getRoom.py文件 第202行(默认不录制)
 
 
 安装包 pip install subprocess loguru requests gevent screeninfo
 
 观看实时直播需要安装 pip install screeninfo 用于获取你屏幕尺寸，计算出直播窗口所在位置
 如安装库缓慢：可以先下载‘自动添加阿里镜像站.py’,运行将会为你自动阿里镜像地址，再次运行将会删除阿里镜像地址
-
