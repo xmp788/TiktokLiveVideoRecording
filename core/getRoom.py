@@ -1,5 +1,6 @@
 import core,time
 from core.dataprocessing import data_replace
+from core.getLoca import getIP
 from re import findall,search,S
 import json,subprocess,threading
 from requests import get
@@ -40,14 +41,17 @@ def getRoomInfo(url,notes='未添加备注'):
       # with open(f'{core.thisPath}/{notes}.json','w',encoding='utf-8') as f:
       #   f.write(script_str)
       script_info=json.loads(script_str)
+      webid=script_info['state']['userStore']['odin']['user_unique_id']
       room_info=script_info['state']['roomStore']['roomInfo']
       uData.update({
         'nickname':room_info['anchor']['nickname'],
         'sec_uid':room_info['anchor']['sec_uid'],
         'status':room_info['room']['status'],# 开播为2 未开播为4
         'roomId':room_info['roomId'],
-        'web_rid':room_info['web_rid']
+        'web_rid':room_info['web_rid'],
+        'city':'未知',
       })
+      # uData['city']=getIP(uData['sec_uid'],webid)
         # '----------------------------------未开播以下报错-----------------------------------------'
       uData.update({
         'flv_rtmp':room_info['room']['stream_url']['flv_pull_url'].get('FULL_HD1'), # 直播流链接
@@ -55,7 +59,6 @@ def getRoomInfo(url,notes='未添加备注'):
         'total_userCount':room_info['room']['stats']['total_user_str'],#总观看人数
         'userCount':room_info['room']['stats']['user_count_str'],# 当前房间人数
         # 'userCount':roomInfo['room']['user_count_str'],# 当前房间人数
-        'city':'未知'
         # city:netWork2(sec_uid).split('：')[1]#开播城市
       })      
       if uData['status']==2:
@@ -121,6 +124,7 @@ def getRoomInfo(url,notes='未添加备注'):
   except Exception as Error:
     uData['Living'],uData['msg']=False,f'{type(Error)}:{Error}'
   finally:
+    uData['authorURL']=f'https://www.douyin.com/user/{uData["sec_uid"]}'
     return (uData)
   
 def RecordingFunc(datas):# 备注，昵称，直播流
@@ -168,7 +172,7 @@ def RecordingFunc(datas):# 备注，昵称，直播流
     def ffP(vf):
       from screeninfo import get_monitors
       wid,hei=get_monitors()[0].width,get_monitors()[0].height  # 获取屏幕尺寸
-      x=230
+      x=5
       ffplayCMD=[f'{core.thisPath}/ffmpeg/ffplay.exe',
                   '-volume',str(2),# 设置直播初始音量
                   '-x',f'{x}',# 设置直播画面大小
@@ -186,13 +190,13 @@ def RecordingFunc(datas):# 备注，昵称，直播流
     # 定义时间水印
     timeWatermark=":".join(["drawtext=text='%{localtime}'",
          f"fontfile={core.thisPath}/ffmpeg/FreeSerif.ttf",
-         "fontsize=50",
-         "fontcolor=red",
+         "fontsize=35",
+         "fontcolor=yellow",
          "x=main_w-text_w-25",
          "y=25"])
     fileN=f'{time.strftime("%Y-%m-%d_%H-%M-%S")}.mp4'
     # fileDirName=titleFilter(datas[0].split('.')[1])#保存文件名       
-    fileDirName=titleFilter(datas[1])#保存文件名       
+    fileDirName=titleFilter(datas[1])#保存文件名
     makedir = core.RecordDir/fileDirName#dir 前面读取配置文件获得
     makedir.mkdir(parents=True,exist_ok=True) # 创建文件夹
     path = makedir/fileN # 文件保存路径
@@ -218,12 +222,15 @@ def MonitoringLive(notes,url):
   # core.Obj[notes]['nickname']=roomInfo['nickname']
   core.Obj[notes].update(roomInfo)
   # 控制台输出状态信息
+  # notes='：IP:'.join([notes,(roomInfo['city'].split('：')[1] if roomInfo['city'] else roomInfo['city'])])
   if roomInfo['Living']:# 判断当前主播是否开播
-    print(f'{notes:{"`"}{"<"}{10}}{roomInfo["msg"]},{roomInfo["userCount"]}/{roomInfo["total_userCount"]},{roomInfo["city"]},{roomInfo["flv_rtmp"]}')
+    print(f'{(notes+","+roomInfo["city"]):{"`"}{"<"}{10}}{roomInfo["msg"]},{roomInfo["userCount"]}/{roomInfo["total_userCount"]},{roomInfo["flv_rtmp"]}')
+    # print(f'{notes:{"`"}{"<"}{10}}{roomInfo["msg"]},{roomInfo["userCount"]}/{roomInfo["total_userCount"]},{roomInfo["flv_rtmp"]}')
     if notes.split('.')[1] in core.rec_somebody_lis:#判断当前主播是是否在录制人员列表中
       if core.mode['RecordVideo']: #判断是否启用录制模式
         info=(notes,roomInfo['nickname'],roomInfo['flv_rtmp'])# 备注，昵称，直播流
         RecordingFunc(info)
   else:
-    print(f'{notes:{"`"}{"<"}{26*2}}{roomInfo["msg"]}')
+    print(f'{(notes+","+roomInfo["city"]):{"`"}{"<"}{26*2}}{roomInfo["msg"]}')
+    # print(f'{notes:{"`"}{"<"}{26*2}}{roomInfo["msg"]}')
   return

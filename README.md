@@ -19,7 +19,7 @@
     只观看不录制，请注释掉core/getRoom.py文件 第202行(默认不录制)
 
 
-安装包 pip install subprocess loguru requests gevent screeninfo
+安装包 pip install subprocess loguru requests gevent screeninfo PyExecJS
 
 观看实时直播需要安装 pip install screeninfo 用于获取你屏幕尺寸，计算出直播窗口所在位置
 如安装库缓慢：可以先下载‘自动添加阿里镜像站.py’,运行将会为你自动阿里镜像地址，再次运行将会删除阿里镜像地址

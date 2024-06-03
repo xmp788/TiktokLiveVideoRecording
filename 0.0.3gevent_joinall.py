@@ -37,19 +37,31 @@ def getConfig():
   core.RecordDir=RecordDir
   core.Obj=Obj   
 
-  k=['num','isRecord','notes','nickname','authorURL','url','recoding']
-  someb=dict.fromkeys(k,'')
+  # core.public_V=dict(
+  #   mode=mode,
+  #   Splicer=Splicer,
+  #   fileName=fileName,
+  #   thisPath=thisPath,
+  #   RecordDir=RecordDir,
+  #   Obj=Obj
+  # )
+
+  someb=dict.fromkeys(['num','isRecord','notes','nickname','authorURL','url','recoding'],'')
   while True:
-    with open(f'{thisPath}\MonitoringAddress.json','r',encoding='utf-8') as f:
-      items=f.readlines()
-    somebody={f"{No}.{item.strip().split(':',1)[0]}": item.strip().split(':',1)[1] for No,item in enumerate(items,start=1) if '//'not in item.strip().split(':',1)[0]}# 字典推导式
+    with open(f'{thisPath}/MonitoringAddress.json','r',encoding='utf-8') as f:
+      List=f.readlines()
+    # 字典推导式  过滤掉需要监听的列表
+    somebody={f"{No}.{item.strip().split(':',1)[0]}": item.strip().split(':',1)[1] for No,item in enumerate(List,start=1) if '//'not in item.strip().split(':',1)[0]}
+    del Splicer,RecordDir,List,f
     for key,value in somebody.items():
-      nu,k2=key.split('.',1)[0],key.split('.',1)[1]
       Obj.setdefault(key,someb.copy())
-      Obj[key].update(num=nu,notes=k2,url=value)
+      Obj[key].update(num=key.split('.',1)[0],
+                      notes=key.split('.',1)[1],
+                      url=value)
  
       # 创建协程,并传递参数
       gevent.joinall([gevent.spawn(MonitoringLive,key,value)])
+      # MonitoringLive(key,value)
       if not mode['ScanList']:
          break
     if not mode['MonirtingLive']:# 是否监视所有列表直播状态
@@ -62,7 +74,7 @@ if __name__ == "__main__":
   mode={
     'ScanList':1, # 是否监视所有地址，1：开启，0：关闭（调试程序用）
     'MonirtingLive':0, # 是否循环监视所有地址
-    'RecordVideo':0 # 是否开启录制模式，1：开启，0：关闭，即只监视状态不录制视频
+    'RecordVideo':1 # 是否开启录制模式，1：开启，0：关闭，即只监视状态不录制视频
   }
-  core.rec_somebody_lis=['一颗心','喜喜'] # 需要录制视频的主播，不需要录制无需添加（地址文件对应的备注）
+  core.rec_somebody_lis=['依依','一颗心','我乐意','小和','喜喜'] # 需要录制视频的主播，不需要录制无需添加（地址文件对应的备注）
   getConfig()
