@@ -1,6 +1,4 @@
-# from gevent import monkey
-# monkey.patch_all()
-import gevent,core,time,configparser
+import core,startWay,time,configparser,gevent
 from core.getRoom import MonitoringLive
 from loguru import logger
 from pathlib import Path
@@ -29,52 +27,33 @@ def getConfig():
       return Path(saveDir)
   RecordDir = Path(readConfigurationFile())
   Obj=dict()
+  core.Public_v=dict(
+    Splicer=Splicer,
+    RecordDir=RecordDir,
+    Obj=Obj
+  )
 
-  core.mode=mode
-  core.Splicer=Splicer
-  core.fileName=fileName
-  core.thisPath=thisPath
-  core.RecordDir=RecordDir
-  core.Obj=Obj   
-
-  # core.public_V=dict(
-  #   mode=mode,
-  #   Splicer=Splicer,
-  #   fileName=fileName,
-  #   thisPath=thisPath,
-  #   RecordDir=RecordDir,
-  #   Obj=Obj
-  # )
-
-  someb=dict.fromkeys(['num','isRecord','notes','nickname','authorURL','url','recoding'],'')
+  del Splicer,RecordDir
+  # 数据初始化
+  someb=dict.fromkeys(['Listening','num','notes','nickname','authorURL','Living','isWatch','isRecord','reCorTime','url','watching','recoding','msg'],False)
+  # 定义程序执行方式
+  sign=['joinAll','gJoin','gLet','apply','async']
+  LS=[]
   while True:
     with open(f'{thisPath}/MonitoringAddress.json','r',encoding='utf-8') as f:
       List=f.readlines()
     # 字典推导式  过滤掉需要监听的列表
     somebody={f"{No}.{item.strip().split(':',1)[0]}": item.strip().split(':',1)[1] for No,item in enumerate(List,start=1) if '//'not in item.strip().split(':',1)[0]}
-    del Splicer,RecordDir,List,f
+    del List,f
     for key,value in somebody.items():
       Obj.setdefault(key,someb.copy())
-      Obj[key].update(num=key.split('.',1)[0],
+      Obj[key].update(
+                      num=key.split('.',1)[0],
                       notes=key.split('.',1)[1],
-                      url=value)
- 
-      # 创建协程,并传递参数
-      gevent.joinall([gevent.spawn(MonitoringLive,key,value)])
-      # MonitoringLive(key,value)
-      if not mode['ScanList']:
-         break
-    if not mode['MonirtingLive']:# 是否监视所有列表直播状态
-      break
-    # else:
-    #   time.sleep(10)
-
+                      url=value
+                      )
+      startWay.way(key,value,sign[0]) # sign=['joinAll','gJoin','gLet','apply','async']
+      # LS.append(gevent.spawn(MonitoringLive,key,value))
+    # gevent.joinall(LS)
 if __name__ == "__main__":
-  # 程序执行方式
-  mode={
-    'ScanList':1, # 是否监视所有地址，1：开启，0：关闭（调试程序用）
-    'MonirtingLive':0, # 是否循环监视所有地址
-    'RecordVideo':1 # 是否开启录制模式，1：开启，0：关闭，即只监视状态不录制视频
-  }
-  core.rec_somebody_lis=['依依','一颗心','我乐意','小和','喜喜'] # 需要录制视频的主播，不需要录制无需添加（地址文件对应的备注）
   getConfig()

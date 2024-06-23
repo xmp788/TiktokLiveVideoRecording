@@ -1,11 +1,11 @@
-import core,time
+import core,time,json
 from core.dataprocessing import data_replace
+from core.liveDataProcessing import LiveProcess
 from core.getLoca import getIP
 from re import findall,search,S
-import json,subprocess,threading
 from requests import get
-from datetime import datetime
 from loguru import logger
+
 
 def netWork(url,urlparams=False,times=3):
   header={
@@ -35,10 +35,10 @@ def getRoomInfo(url,notes='未添加备注'):
     if mark=='Web':
       script_str=data_replace(web_html)      
       # 下载网页源代码 
-      # with open(f'{core.thisPath}/{notes}.html','w',encoding='utf-8') as f:
+      # with open(f'{thisFileP}/{notes}.html','w',encoding='utf-8') as f:
       #   f.write(web_html)
       # 写入数据json文件
-      # with open(f'{core.thisPath}/{notes}.json','w',encoding='utf-8') as f:
+      # with open(f'{thisFileP}/{notes}.json','w',encoding='utf-8') as f:
       #   f.write(script_str)
       script_info=json.loads(script_str)
       webid=script_info['state']['userStore']['odin']['user_unique_id']
@@ -111,126 +111,52 @@ def getRoomInfo(url,notes='未添加备注'):
       })
       # print(self_data)
       if uData['status']==4:
-        uData['Living'],uData['msg']=True,'正在直播……'
+        uData['Living'],uData['msg']=True,'正在直播'
       else:
         uData['Living'],uData['msg'],uData['flv_rtmp']=False,'未开播',""
 
-  # except AttributeError as Error:
-  #   uData['Living'],uData['msg']=False,f'{type(Error)}:{Error}'
-  # except TimeoutError as Error:
-  #   uData['Living'],uData['msg']=False,f'请求超时!{type(Error)}'
-  except KeyError as Error:
+  except KeyError as e:
     uData['Living'],uData['msg']=False,'未开播'
-  except Exception as Error:
-    uData['Living'],uData['msg']=False,f'{type(Error)}:{Error}'
+  except TimeoutError as e:
+    uData['Living'],uData['msg']=False,f'{type(e)}:{e}'
+  except OSError as e:
+    # from pathlib import Path
+    # thisFileP=Path(__file__).parent.parent
+    # import subprocess
+    # subprocess.Popen(f'{thisFileP}/ffmpeg/ffplay.exe -nodisp -volume 100 -autoexit -i {thisFileP}/sound/notify_message.mp3')
+    # uData['Living'],uData['msg']=False,'未开播'
+    logger.error(f'{type(e)}:{e}')
+    uData['Living'],uData['msg']=False,f'{type(e)}'
   finally:
-    uData['authorURL']=f'https://www.douyin.com/user/{uData["sec_uid"]}'
-    return (uData)
-  
-def RecordingFunc(datas):# 备注，昵称，直播流
-  """录制函数""" 
-  msg=f'{datas[1]} {core.Splicer}'
-  if not core.Obj[datas[0]]['recoding']:
-    # 文件标题
-    def titleFilter(liveFileName: str):
-      """转为Windows合法文件名"""
-      # 非法字符
-      lst = ['\r', '\n', '\\', '/', ':', '*', '?', '"', '<', '>', '|']
-      # 非法字符处理方式1
-      # for key in lst:
-      #     liveFileName = liveFileName.replace(key, '&')
-      # 非法字符处理方式2
-      table = str.maketrans(dict.fromkeys(''.join(lst),'&'))
-      liveFileName = liveFileName.translate(table)
-      # 文件名+路径长度最大255，汉字*2，取60
-      if len(liveFileName) > 60:
-          liveFileName = liveFileName[:60]
-      return liveFileName.strip()
-    
-    def Rec_ing(urls,fileFullname,vf):
-      """录制命令"""    
-      cmd = [str(f'{core.thisPath}/ffmpeg/ffmpeg.exe'),"-re","-y",
-              "-v","verbose", 
-              "-timeout","2000",
-              "-loglevel","error",
-              "-hide_banner",
-              "-user_agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-              "-analyzeduration","2147483647",
-              "-probesize","2147483647",
-              "-i",urls,
-              "-vf",vf,
-              '-bufsize','5000k',
-              "-map","0",
-              "-sn","-dn",
-              '-max_muxing_queue_size','64',
-              str(fileFullname)]
-      print(f'{msg}开始录制视频……')
-      logger.info(f'{msg}开始录制视频……')
-      subprocess.Popen(cmd).wait()# 录制
-      core.Obj[datas[0]]['rec_etime'],core.Obj[datas[0]]['recoding']=datetime.now(),False
-      logger.info(f"{msg}直播结束!停止录制！！！{msg}已成功录制:{core.Obj[datas[0]]['rec_etime']-core.Obj[datas[0]]['rec_stime']}")
-    def ffP(vf):
-      from screeninfo import get_monitors
-      wid,hei=get_monitors()[0].width,get_monitors()[0].height  # 获取屏幕尺寸
-      x=5
-      ffplayCMD=[f'{core.thisPath}/ffmpeg/ffplay.exe',
-                  '-volume',str(2),# 设置直播初始音量
-                  '-x',f'{x}',# 设置直播画面大小
-                  '-left',f'{wid-x}',# 位置
-                  '-vf',vf,# 过滤器(水印)
-                  '-autoexit',# 播放结束后自动退出
-                  '-window_title',datas[1],# 设置标题
-                  # '-vn',# 无视频
-                  # '-nodisp',# 无输出画面
-                  # '-hide_banner',
-                  '-noborder',# 设置为无边框
-                  '-i',datas[2]]# 输入源
-      subprocess.Popen(ffplayCMD)
-
-    # 定义时间水印
-    timeWatermark=":".join(["drawtext=text='%{localtime}'",
-         f"fontfile={core.thisPath}/ffmpeg/FreeSerif.ttf",
-         "fontsize=35",
-         "fontcolor=yellow",
-         "x=main_w-text_w-25",
-         "y=25"])
-    fileN=f'{time.strftime("%Y-%m-%d_%H-%M-%S")}.mp4'
-    # fileDirName=titleFilter(datas[0].split('.')[1])#保存文件名       
-    fileDirName=titleFilter(datas[1])#保存文件名
-    makedir = core.RecordDir/fileDirName#dir 前面读取配置文件获得
-    makedir.mkdir(parents=True,exist_ok=True) # 创建文件夹
-    path = makedir/fileN # 文件保存路径
+    # uData['authorURL']=f'https://www.douyin.com/user/{uData["sec_uid"]}'
+    # return uData
     try:
-      # 记录录制时间,标记正在录制状态
-      core.Obj[datas[0]]['recoding'],core.Obj[datas[0]]['rec_stime']=True,datetime.now()      
-      # threading.Thread(target=Rec_ing,args=(datas[2],path,timeWatermark)).start()# 创建录制视频线程
-      threading.Thread(target=ffP,args=(timeWatermark,)).start()# 创建ffplay播放线程
-      # 创建子进程,使用ffpaly播放开播提醒音
-      subprocess.Popen(f'{core.thisPath}/ffmpeg/ffplay.exe -nodisp -volume 3 -autoexit -i {core.thisPath}/sound/notify_message.mp3')
+      uData['authorURL']=f'https://www.douyin.com/user/{uData["sec_uid"]}'
     except Exception as e:
-      sr='='
-      msg=f'{datas[1]}{sr*20}>>录制异常:'
-      print(f'{msg}{e}') 
-      logger.error(f'{msg}{e}') 
-  else:
-    now_time=datetime.now()
-    print(f"{msg}已录制:{now_time-core.Obj[datas[0]]['rec_stime']}")
-
+      print(e,resqJson,sep='\n')
+    finally:
+      return (uData)
+    
 @logger.catch 
-def MonitoringLive(notes,url):  
+def MonitoringLive(notes,url):
+  
   roomInfo=getRoomInfo(url,notes)
-  # core.Obj[notes]['nickname']=roomInfo['nickname']
-  core.Obj[notes].update(roomInfo)
+  # core.Public_v['Obj'][notes]['nickname']=roomInfo['nickname']
+  core.Public_v['Obj'][notes].update(roomInfo)
   # 控制台输出状态信息
   # notes='：IP:'.join([notes,(roomInfo['city'].split('：')[1] if roomInfo['city'] else roomInfo['city'])])
+  # return
   if roomInfo['Living']:# 判断当前主播是否开播
     print(f'{(notes+","+roomInfo["city"]):{"`"}{"<"}{10}}{roomInfo["msg"]},{roomInfo["userCount"]}/{roomInfo["total_userCount"]},{roomInfo["flv_rtmp"]}')
     # print(f'{notes:{"`"}{"<"}{10}}{roomInfo["msg"]},{roomInfo["userCount"]}/{roomInfo["total_userCount"]},{roomInfo["flv_rtmp"]}')
-    if notes.split('.')[1] in core.rec_somebody_lis:#判断当前主播是是否在录制人员列表中
-      if core.mode['RecordVideo']: #判断是否启用录制模式
-        info=(notes,roomInfo['nickname'],roomInfo['flv_rtmp'])# 备注，昵称，直播流
-        RecordingFunc(info)
+    # if core.Public_v['Obj'][notes]['isRecord'] or core.Public_v['Obj'][notes]['watch']:# 当前主播是否需要录制 控制程序是否需要执行后面代码
+      # if core.Public_v['mode']['RecordVideo']: #判断是否启用录制模式
+    info=(notes,roomInfo['nickname'],roomInfo['flv_rtmp'])# 备注，昵称，直播流
+    LiveProcess(info)
   else:
-    print(f'{(notes+","+roomInfo["city"]):{"`"}{"<"}{26*2}}{roomInfo["msg"]}')
+    try:
+      print(f'{(notes+","+roomInfo["city"]):{"`"}{"<"}{26*2}}{roomInfo["msg"]}')
+    except Exception as e:
+      print(e,roomInfo,sep='\n')
     # print(f'{notes:{"`"}{"<"}{26*2}}{roomInfo["msg"]}')
   return

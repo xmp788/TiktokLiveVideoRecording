@@ -4,7 +4,7 @@ from pathlib import Path
 import requests.cookies
 thisPath=Path(__file__).parent
 # print(str(thisPath))
-
+# https://blog.csdn.net/u013444182/article/details/134933150?spm=1001.2101.3001.6650.5&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-5-134933150-blog-126710019.235%5Ev43%5Econtrol&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-5-134933150-blog-126710019.235%5Ev43%5Econtrol&utm_relevant_index=10
 cookies = {
   'bd_ticket_guard_client_web_domain':'2',
   'passport_assist_user':'Cjxh6CMxuKu-cG8lXSwLqNdq37RJeG4gRfHZYevHLLtXdC_3anQ9U3SAZLEHxgwStsfg_eBShAR5panHcIcaSgo8HDpXS39YFISWgNgDGZan-E1BY3j9AXnICrmirRzohmEDgjOFzGRUd2wB0LOS82WrUWtN_H09LJZcQDp2EMSayg0Yia_WVCABIgEDAJoCnA%3D%3D',
@@ -121,8 +121,8 @@ def getIP(sec_user_id,webid='7351336382603920896'):
 
   URL={
     'url':'https://www.douyin.com',
-    # 'interface':'/aweme/v1/web/user/profile/other/',
-    'interface':'/aweme/v1/web/aweme/post/'
+    'interface':'/aweme/v1/web/user/profile/other/',
+    # 'interface':'/aweme/v1/web/aweme/post/'
   }
 
   headers['referer']=f'https://www.douyin.com/user/{sec_user_id}'
