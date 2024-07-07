@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QApplication,QMainWindow
-from Ui.MainW_Ui import Ui_MainWindow
+from Ui.QtSide6_Ui import Ui_MainWindow
 from comonMain import getConfig
 import threading
 class MyWindow(QMainWindow,Ui_MainWindow):
