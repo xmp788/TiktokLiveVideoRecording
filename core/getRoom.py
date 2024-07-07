@@ -142,7 +142,13 @@ def MonitoringLive(notes,url):
   
   roomInfo=getRoomInfo(url,notes)
   # core.Public_v['Obj'][notes]['nickname']=roomInfo['nickname']
-  core.Public_v['Obj'][notes].update(roomInfo)
+  try:
+    core.Public_v['Obj'][notes].update(roomInfo)
+  except KeyError as er:
+    print(f'{er}被删除')
+    return
+  except Exception as er:
+    print(er)
   # 控制台输出状态信息
   # notes='：IP:'.join([notes,(roomInfo['city'].split('：')[1] if roomInfo['city'] else roomInfo['city'])])
   # return
@@ -152,7 +158,7 @@ def MonitoringLive(notes,url):
     # if core.Public_v['Obj'][notes]['isRecord'] or core.Public_v['Obj'][notes]['watch']:# 当前主播是否需要录制 控制程序是否需要执行后面代码
       # if core.Public_v['mode']['RecordVideo']: #判断是否启用录制模式
     info=(notes,roomInfo['nickname'],roomInfo['flv_rtmp'])# 备注，昵称，直播流
-    LiveProcess(info)
+    # LiveProcess(*info)
   else:
     try:
       print(f'{(notes+","+roomInfo["city"]):{"`"}{"<"}{26*2}}{roomInfo["msg"]}')

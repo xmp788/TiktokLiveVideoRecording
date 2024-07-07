@@ -1,6 +1,8 @@
 # from gevent import monkey
 # monkey.patch_all()
 from core.getRoom import MonitoringLive
+import gevent
+
 def way(somebody,url,sign='joinAll'):
   match sign:
     case 'joinAll':
@@ -35,3 +37,14 @@ def way(somebody,url,sign='joinAll'):
 
       p2.close()
       p2.join()
+def way2(Q):
+  LS=[]
+  while True:
+    try:
+      somebody,url=Q.get()
+      LS.append(gevent.spawn(MonitoringLive,somebody,url))
+      if len(LS)==Q.maxsize:
+        gevent.joinall(LS)
+        LS.clear()
+    except Exception as e:
+      print(e)

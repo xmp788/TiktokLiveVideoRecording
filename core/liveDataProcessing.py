@@ -13,7 +13,7 @@ def commonSeting():
         "y=25"])
   return timeWatermark
 
-def RecordingFunc(datas,msg):# 备注，昵称，直播流
+def RecordingFunc(somebody,nickname,flv_rtmp,msg):# 备注，昵称，直播流
   """录制函数""" 
   # 文件标题
   def titleFilter(liveFileName: str):
@@ -30,7 +30,7 @@ def RecordingFunc(datas,msg):# 备注，昵称，直播流
     if len(liveFileName) > 60:
         liveFileName = liveFileName[:60]
     return liveFileName.strip()
-  def Rec_ing(urls,fileFullname,vf):
+  def Rec_ing(urls,fileFullname,vf,msg):
     """录制命令"""    
     cmd = [str(f'{thisFileP}/ffmpeg/ffmpeg.exe'),"-re","-y",
             "-v","verbose", 
@@ -49,53 +49,62 @@ def RecordingFunc(datas,msg):# 备注，昵称，直播流
             str(fileFullname)]
     print(f'{msg}开始录制视频……')
     logger.info(f'{msg}开始录制视频……')
-    subprocess.Popen(cmd).wait()# 录制
-    obj[datas[0]]['rec_etime'],obj[datas[0]]['recoding']=datetime.now(),False
-    logger.info(f"{msg}直播结束!停止录制！！！{msg}已成功录制:{obj[datas[0]]['rec_etime']-obj[datas[0]]['rec_stime']}")
-  
+    try:
+      subprocess.Popen(f'{thisFileP}/ffmpeg/ffplay.exe -nodisp -volume 6 -autoexit -i {thisFileP}/sound/notify_message.mp3')
+      # 标记正在录制状态,记录录制时间
+      obj[somebody]['recoding'],obj[somebody]['rec_stime']=True,datetime.now()
+      sub=subprocess.Popen(cmd)
+      obj[somebody]['recPID']=sub.pid
+      sub.wait()# 录制
+      logger.info(f"{msg}直播结束!停止录制！！！{msg}已成功录制:{datetime.now()-obj[somebody]['rec_stime']}")
+    except Exception as e:
+      sr='='
+      msg=f'{nickname}{sr*20}>>录制异常:'
+      print(f'{msg}{e}') 
+      logger.error(f'{msg}{e}')
+    finally:
+      obj[somebody]['recoding'],obj[somebody]['rec_stime']=False,''  
   fileN=f'{time.strftime("%Y-%m-%d_%H-%M-%S")}.mp4'
-  # fileDirName=titleFilter(datas[0].split('.')[1])#保存文件名       
-  fileDirName=titleFilter(datas[1])#保存文件名
+  # fileDirName=titleFilter(sb.split('.')[1])#保存文件名       
+  fileDirName=titleFilter(nickname)#保存文件名
   makedir = core.Public_v['RecordDir']/fileDirName#dir 前面读取配置文件获得
   makedir.mkdir(parents=True,exist_ok=True) # 创建文件夹
   path = makedir/fileN # 文件保存路径
-  try:
-    # 记录录制时间,标记正在录制状态
-    obj[datas[0]]['recoding'],obj[datas[0]]['rec_stime']=True,datetime.now()
-    Rec_ing(datas[2],path,commonSeting())# 创建录制视频线程
-    
-  except Exception as e:
-    sr='='
-    msg=f'{datas[1]}{sr*20}>>录制异常:'
-    print(f'{msg}{e}') 
-    logger.error(f'{msg}{e}') 
+  # 创建录制视频线程
+  threading.Thread(target=Rec_ing,args=(flv_rtmp,path,commonSeting(),msg)).start()
 
-def  watching(datas):
-  from screeninfo import get_monitors
-  wid,hei=get_monitors()[0].width,get_monitors()[0].height  # 获取屏幕尺寸
-  x=0
+def  watching(somebody,nickname,flv_rtmp):
+  scrWidth,scrHeight=core.Public_v['scrWidth'],core.Public_v['scrHeight']  # 取出屏幕尺寸
+  x=5
   ffplayCMD=[f'{thisFileP}/ffmpeg/ffplay.exe',
               '-volume',str(2),# 设置直播初始音量
               '-x',f'{x}',# 设置直播画面大小
-              '-left',f'{wid-x}',# 位置
+              '-left',f'{scrWidth-x}',# 位置
               '-vf',commonSeting(),# 过滤器(水印)
               '-autoexit',# 播放结束后自动退出
-              '-window_title',datas[1],# 设置标题
+              '-window_title',nickname,# 设置标题
               # '-vn',# 无视频
               # '-nodisp',# 无输出画面
               # '-hide_banner',
               '-noborder',# 设置为无边框
-              '-i',datas[2]]# 输入源
-  obj[datas[0]]['watching']=False
+              '-i',flv_rtmp]# 输入源
+  # obj[sb]['watching']=False
   # 创建子进程,使用ffpaly播放开播提醒音
   # subprocess.Popen(f'{thisFileP}/ffmpeg/ffplay.exe -nodisp -volume 100 -autoexit -i {thisFileP}/sound/notify_message.mp3')
-  subprocess.Popen(ffplayCMD).wait()
-  obj[datas[0]]['isWatch']=False
-def LiveProcess(datas):
+  sub=subprocess.Popen(ffplayCMD)
+  obj[somebody]['watPID']=sub.pid
+  sub.wait()
+  obj[somebody]['isWatch']=False
+def LiveProcess(*datas):
   global obj
   obj=core.Public_v['Obj']
-  msg=f'{datas[1]} {core.Public_v["Splicer"]}'
-  if obj[datas[0]]['isRecord']:# 录制
-    threading.Thread(target=RecordingFunc,args=(datas,msg)).start() if not obj[datas[0]]['recoding'] else print(f"{msg}已录制:{datetime.now()-obj[datas[0]]['rec_stime']}")    
-  if obj[datas[0]]['isWatch']:# 观看    
-    threading.Thread(target=watching,args=(datas,)).start() if obj[datas[0]]['watching'] else print('正在观看')
+  sb,flag=datas
+  nickname,flv_rtmp=obj[sb]["nickname"],obj[sb]['flv_rtmp']
+  msg=f'{nickname} {core.Public_v["Splicer"]}'
+  if obj[sb]['isRecord'] and flag==-1:# 录制
+    if obj[sb]['recoding']:
+      print(f"{msg}已录制:{datetime.now()-obj[sb]['rec_stime']}")
+    else:
+      RecordingFunc(sb,nickname,flv_rtmp,msg)
+  if obj[sb]['isWatch'] and flag==1:# 观看    
+    threading.Thread(target=watching,args=(sb,nickname,flv_rtmp)).start() if obj[sb]['watching'] else print('正在观看')
