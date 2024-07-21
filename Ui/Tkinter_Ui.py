@@ -30,13 +30,12 @@ class CreateTable():
     self.x,self.y=260,13
     self.fgcolor,self.bgcolor='#D15','#FFC' # 颜色 
     pad=5
-
     frame=Frame(parent,padx=pad,pady=pad,background=self.bgcolor)
-    self.scro=Scrollbar(frame,width=15)
+    self.scro=Scrollbar(frame,width=0)
     ftable=Frame(frame)    
 
     ftHead=Frame(ftable)
-    self.ftBody=Canvas(ftable,width=500)
+    self.ftBody=Canvas(ftable,width=2*self.x,highlightthickness=0)
 
     self.fbody=Frame(self.ftBody)# 表体框架
 
@@ -78,11 +77,11 @@ class CreateTable():
     tHead=LabelFrame(parent,name='tableHead',borderwidth=1,bg=self.bgcolor,fg=self.fgcolor)
     tHead.pack(ipadx=self.x,ipady=self.y+2)
     for index,item in enumerate(self.txt):
-      if index==1:
-        tableHead.update({'isCheckBox_all':BooleanVar()})
-        Checkbutton(tHead,text=item,border=3,bg=self.bgcolor,variable=tableHead['isCheckBox_all']).place(relwidth=self.Vis[index],relx=self.rex[index])
-      else:
-        Label(tHead,text=item,border=5,bg=self.bgcolor).place(relwidth=self.Vis[index],relx=self.rex[index])
+      # if index==1:# 监听全选框        
+      #   tableHead.update({'isCheckBox_all':BooleanVar()})
+      #   Checkbutton(tHead,text=item,border=3,bg=self.bgcolor,variable=tableHead['isCheckBox_all']).place(relwidth=self.Vis[index],relx=self.rex[index])
+      #   continue
+      Label(tHead,text=item,border=5,bg=self.bgcolor).place(relwidth=self.Vis[index],relx=self.rex[index])
     return self.select.update({'tableHead':tableHead})
   
   def updateTab(self,parent):
@@ -112,7 +111,7 @@ class CreateTable():
   def addRow(self,i:int):
     """添加一行控件[框架]"""
     LabelFrame_=dict()
-    rD=LabelFrame(self.fbody,name=f'rD_{i}',border=5,borderwidth=1,bg=self.bgcolor,fg=self.fgcolor)
+    rD=LabelFrame(self.fbody,name=f'rD_{i}',border=1,bg=self.bgcolor,fg=self.fgcolor)
     rD.pack(ipadx=self.x,ipady=self.y)
     LabelFrame_.update({f'rD':rD})
 
