@@ -26,7 +26,7 @@ class Ui_MainWindow(Tk):
       frame=Frame(Tabs,name=tab[0],bg='pink')
       Tabs.add(frame,text=tab[1])
     Tabs.pack(fill='both',expand=1)
-    Tabs.select(1)# 设置默认选择
+    Tabs.select(0)# 设置默认选择
     return Tabs
 
 class SetPage():
