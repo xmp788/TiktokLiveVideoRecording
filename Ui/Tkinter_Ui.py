@@ -1,8 +1,11 @@
 from tkinter import *
+from tkinter.filedialog import *
 from tkinter.ttk import Notebook
 from Ui.processClicke import clicked
 from datetime import datetime
-import core
+from pathlib import Path
+from loguru import logger
+import core,pickle,configparser
 
 class Ui_MainWindow(Tk):
   def __init__(self):
@@ -12,7 +15,8 @@ class Ui_MainWindow(Tk):
     self.title('抖音直播监听')
     # 获取屏幕大小 
     scrWidth,scrHeight=self.winfo_screenwidth(),self.winfo_screenheight()
-    sizePosition=f'{int(win_width*scrWidth)}x{int(win_height*scrHeight)}{xy}'
+    # sizePosition=f'{int(win_width*scrWidth)}x{int(win_height*scrHeight)}{xy}'
+    sizePosition=f'{int(520)}x{int(260)}{xy}'
     self.geometry(sizePosition)    
 
   def _tabs(self,kw:dict):
@@ -22,8 +26,66 @@ class Ui_MainWindow(Tk):
       frame=Frame(Tabs,name=tab[0],bg='pink')
       Tabs.add(frame,text=tab[1])
     Tabs.pack(fill='both',expand=1)
+    Tabs.select(1)# 设置默认选择
     return Tabs
 
+class SetPage():
+ 
+  def __init__(self,parent:Frame,**kw) -> None:
+    self.parentPath=Path(__file__).parent.parent # 获取项目根目录
+    labfr=LabelFrame(parent,text='视频保存位置（鼠标左键双击可更改）')
+    # Label(labfr,text='视频保存位置：').pack(side='left')
+    pth=self.readConfigurationFile()
+    self.pth=pth if pth else fr'{self.parentPath}\Video'
+    self.vp=Entry(labfr,width=35,text=StringVar(value=self.pth))
+    self.vp.pack(side='left',fill='both')
+    # Button(labfr,text='打开',command=self.ck).pack(side='left')
+    labfr.pack(fill='x')
+
+    labfr=LabelFrame(parent,text='主播直播间列表（备注+直播间地址，// 表示不需要监听的主播）')
+    labfr.pack(side='right')
+    self.notep=Text(labfr,kw,font=300,bd=0)
+    self.notep.pack(anchor='nw',expand=1,fill='both')
+    self.addRecod()
+    # 鼠标左键双击更改视频保存路径
+    self.vp.bind('<Double-Button-1>',self.ck)
+
+  def readConfigurationFile(self):
+      """读取配置文件"""
+      config = configparser.ConfigParser()
+      try:
+        config.read(f'{self.parentPath}/config.ini',encoding='utf8')
+        saveDir = config.get('DouYin','downloadPath')
+      except Exception as e:
+        return None
+      return Path(saveDir)
+  
+  def ck(self,event):
+    path= askdirectory(title='视频保存路径',initialdir=self.vp.get())
+    path =path if path else self.vp.get()
+    self.vp.configure(text=StringVar(value=path))
+
+  def addRecod(self):
+    """读取已保存文件"""
+    # with open(f'{parentPath}/MonitoringAddress.json','r',encoding='utf-8') as f:
+    #   data=f.readlines()
+    with open(f'{self.parentPath}/MonitoringAddress.pkl','rb') as f:
+      data=pickle.load(f)
+    self.notep.insert(INSERT,''.join(data))
+
+  def getData(self) -> list:
+    """获取文本框中数据"""
+    return self.notep.get(1.0,END).strip()
+
+  def saveDate(self):
+    """保存文件(二进制)"""
+    # data=self.notep.get(1.0,END).strip()
+    with open(f'{self.parentPath}/MonitoringAddress.pkl','wb') as f:
+      pickle.dump(self.notep.get(1.0,END).strip(),f)
+    recodpath=f'downloadPath={self.vp.get()}'
+    string=f'[DouYin]\n{recodpath}'
+    with open(f'{self.parentPath}/config.ini','w',encoding='utf-8') as f:
+      f.write(string)
 class CreateTable():
   """创建表格"""
   def __init__(self,parent:Frame):
@@ -49,7 +111,7 @@ class CreateTable():
     self.scro.config(command=self.ftBody.yview)
 
 
-    self.txt=['No','监听','备注','昵称','主页','状态','点击观看','录视频','已录制'] # 定义表头
+    self.txt=['序号','监听','备注','昵称','主页','状态','点击观看','录视频','已录制'] # 定义表头
     self.select=dict()
     self.tableHeader=dict.fromkeys(self.txt,'')    
     self.Vis=[0.03,0.09,0.1,0.26,0.08,0.1,0.12,0.06,0.16]# 宽度
@@ -111,30 +173,40 @@ class CreateTable():
   def addRow(self,i:int):
     """添加一行控件[框架]"""
     LabelFrame_=dict()
-    rD=LabelFrame(self.fbody,name=f'rD_{i}',border=1,bg=self.bgcolor,fg=self.fgcolor)
+    rD=LabelFrame(self.fbody,name=f'rD_{i}',bd=1,bg=self.bgcolor,fg=self.fgcolor)
     rD.pack(ipadx=self.x,ipady=self.y)
     LabelFrame_.update({f'rD':rD})
 
     for index in range(len(self.tableHeader)):
-      highlightbackground="red"
-      highlightcolor="blue"
-      if index==1:
+      conf={
+        'bd':0,
+        'highlightbackground':'green',
+        'highlightcolor':'blue',
+        'fg':self.fgcolor,
+        'bg':self.bgcolor
+      }
+      pl={
+        'relwidth':self.Vis[index],
+        'relx':self.rex[index],
+        'relheight':1
+      }
+      if index==1:# 监听
         LabelFrame_.update({f'isCheckBox_{i}':BooleanVar()})
-        CKB=Checkbutton(rD,name=f'checkbox_{i}_{index}',border=0,bg=self.bgcolor,variable=LabelFrame_[f'isCheckBox_{i}'])
-        CKB.place(relwidth=self.Vis[index],relx=self.rex[index])
-        LabelFrame_.update({f'checkbox_{i}_{index}':CKB})
-      elif index==6:
-        btn=Button(rD,name=f'isWatch_{i}_{index}',border=0,bg=self.bgcolor,relief='flat')
-        btn.place(relwidth=self.Vis[index],relx=self.rex[index])
+        ckb=Checkbutton(rD,name=f'checkbox_{i}_{index}',variable=LabelFrame_[f'isCheckBox_{i}'],**conf)
+        ckb.place(**pl)
+        LabelFrame_.update({f'checkbox_{i}_{index}':ckb})
+      elif index==6:# 观看
+        btn=Button(rD,name=f'isWatch_{i}_{index}',relief='flat',**conf)
+        btn.place(**pl)
         LabelFrame_.update({f'isWatch_{i}_{index}':btn})
-      elif index==7:
+      elif index==7:# 录制
         LabelFrame_.update({f'Radio_{i}':BooleanVar()})
-        rbtn=Radiobutton(rD,name=f'radio_{i}_{index}',border=0,bg=self.bgcolor)
-        rbtn.place(relwidth=self.Vis[index],relx=self.rex[index])
+        rbtn=Radiobutton(rD,name=f'radio_{i}_{index}',**conf)
+        rbtn.place(**pl)
         LabelFrame_.update({f'radio_{i}_{index}':rbtn})
       else:
-        entry=Entry(rD,name=f'lb_{i}_{index}',bd=0,fg=self.fgcolor,bg=self.bgcolor,justify='center')
-        entry.place(relwidth=self.Vis[index],relx=self.rex[index],relheight=1)     
+        entry=Entry(rD,name=f'lb_{i}_{index}',justify='center',**conf)
+        entry.place(**pl)     
         LabelFrame_.update({f'lb_{i}_{index}':entry})
     self.tabBody.update({f'LabelFrame_{i}':LabelFrame_})
     

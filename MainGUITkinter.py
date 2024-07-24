@@ -1,4 +1,4 @@
-from Ui.Tkinter_Ui import Ui_MainWindow,CreateTable
+from Ui.Tkinter_Ui import *
 from comonMain import getConfig
 import threading
 from tkinter import *
@@ -10,12 +10,16 @@ class MyWindow(Ui_MainWindow,CreateTable):
     self.MaxW,self.MaxH,self.xy=0.4,0.3,'-0-25'
     self._win(self.MaxW,self.MaxH,self.xy)
     # self.resizable(width=False, height=False)
-
     self.Tabs=self._tabs({'table':'监听列表','setting':'设置'}).children
+    self.setting=SetPage(self.Tabs['setting'])#,width=20,height=1)
+    threading.Thread(target=getConfig,name='getData',args=(self.setting,)).start()
     self.tabel=CreateTable(self.Tabs['table'])
 def entrance():
-  threading.Thread(target=getConfig,name='getData').start()
   wd=MyWindow()
+  def quit():
+    wd.setting.saveDate()
+    wd.destroy()
+  wd.protocol("WM_DELETE_WINDOW",quit)
   wd.mainloop()
 if __name__=='__main__':
   entrance()

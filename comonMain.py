@@ -13,8 +13,8 @@ def runtime(fun):
     endTime=time.time()
     print(f'程序运行结束,耗费时长:{(endTime-startTime):.9f}秒')
   return callFun
-@runtime
-def getConfig():  
+# @runtime
+def getConfig(data):  
   fileName=lambda name:thisPath/name 
   thisPath=Path(__file__).parent#当前文件所在位置
   Splicer=f'{"":{"一"}{">"}{10}}' # 对象拼接符
@@ -26,9 +26,12 @@ def getConfig():
       config = configparser.ConfigParser()
       config.read(fileName('config.ini'),encoding='utf8')
       saveDir = config.get('DouYin','downloadPath')
-      logger.debug(f"配置文件路径为：{saveDir}")
       return Path(saveDir)
-  RecordDir = Path(readConfigurationFile())
+  try:
+    RecordDir=data.pth
+  except Exception:
+    RecordDir = Path(readConfigurationFile())  
+  logger.debug(f"配置文件路径为：{RecordDir}")
   Obj=dict()# 创建数据数据模型
   core.Public_v=dict(
     Splicer=Splicer,
@@ -46,13 +49,15 @@ def getConfig():
   # LS=[]
   urlist=set()
   while True:
-    with open(f'{thisPath}/MonitoringAddress.json','r',encoding='utf-8') as f:
-      List=f.readlines()
+    # if not List:
+    #   with open(f'{thisPath}/MonitoringAddress.json','r',encoding='utf-8') as f:
+    #     List=f.readlines()
+    List=data.getData().strip().split('\n')
     List=[_ for _ in List if not _.startswith('//')] # 剔除不需要的监听
     # 字典推导式  过滤掉需要监听的列表
     # somebody={f"{No}.{item.strip().split(':',1)[0]}": item.strip().split(':',1)[1] for No,item in enumerate(List,start=1) if '//'not in item.strip().split(':',1)[0]}
     somebody={f"{item.strip().split(':',1)[0]}": item.strip().split(':',1)[1] for item in List if '//'not in item.strip().split(':',1)[0]}
-    del List,f
+    del List
     newSet=set(somebody.keys())
     if len(urlist) and urlist!=newSet:
       """利用集合找出变动过的数据"""
@@ -77,5 +82,5 @@ def getConfig():
     # gevent.joinall(Q.get(block=True)) 
     # gevent.joinall(LS) 
     
-if __name__ == "__main__":
-  getConfig()
+# if __name__ == "__main__":
+#   getConfig()
