@@ -16,7 +16,10 @@ class MyWindow(Ui_MainWindow,CreateTable):
     self.tabel=CreateTable(self.Tabs['table'])
 def entrance():
   wd=MyWindow()
+  # wd.attributes('-alpha',1)
+  # wd.overrideredirect(True)
   def quit():
+    """退出程序保存相关设置数据"""
     wd.setting.saveDate()
     wd.destroy()
   wd.protocol("WM_DELETE_WINDOW",quit)

@@ -111,7 +111,7 @@ class CreateTable():
     self.scro.config(command=self.ftBody.yview)
 
 
-    self.txt=['序号','监听','备注','昵称','主页','状态','点击观看','录视频','已录制'] # 定义表头
+    self.txt=['No','监听','备注','昵称','主页','状态','点击观看','录视频','已录制'] # 定义表头
     self.select=dict()
     self.tableHeader=dict.fromkeys(self.txt,'')    
     self.Vis=[0.03,0.09,0.1,0.26,0.08,0.1,0.12,0.06,0.16]# 宽度
@@ -129,7 +129,6 @@ class CreateTable():
 
     self.setTabHeader(ftHead)
     core.Public_v.update({'scrWidth':parent.winfo_screenwidth(),'scrHeight':parent.winfo_screenheight()})
-    # self.updateTab(parent)
     parent.after(1000,lambda:self.updateTab(parent))
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -177,14 +176,14 @@ class CreateTable():
     rD.pack(ipadx=self.x,ipady=self.y)
     LabelFrame_.update({f'rD':rD})
 
+    conf={
+      'bd':0,
+      'highlightbackground':'green',
+      'highlightcolor':'blue',
+      'fg':self.fgcolor,
+      'bg':self.bgcolor
+    }
     for index in range(len(self.tableHeader)):
-      conf={
-        'bd':0,
-        'highlightbackground':'green',
-        'highlightcolor':'blue',
-        'fg':self.fgcolor,
-        'bg':self.bgcolor
-      }
       pl={
         'relwidth':self.Vis[index],
         'relx':self.rex[index],
@@ -212,52 +211,61 @@ class CreateTable():
     
   def refreshData(self,tabBody:dict,Obj,length):
     """刷新表数据"""
-    for i,someOne in enumerate(Obj):
-      for j,(k,v) in enumerate(Obj[someOne].items()):
-        if j==length:break
-        if j==0:
-          v=i+1
-        v1=StringVar(value=v)
-        match k:
-          case 'Listening':
-            # tabBody[f'LabelFrame_{i}'][f'isCheckBox_{i}'].set(Obj[someOne]['isRecord'])
-            continue      
-          case 'authorURL':# 主页
-            v1.set('查看')
-          case 'Living':# 状态
-            v1.set(Obj[someOne]['msg'])
-          case 'isWatch':# 直播 watching
-            if Obj[someOne]['Living']:
+    try:
+      for i,someOne in enumerate(Obj):
+        for j,(k,v) in enumerate(Obj[someOne].items()):
+          if j==length:break
+          if j==0:
+            v=i+1
+          v1=StringVar(value=v)
+          match k:
+            case 'Listening':
+              # tabBody[f'LabelFrame_{i}'][f'isCheckBox_{i}'].set(Obj[someOne]['isRecord'])
+              continue      
+            case 'nickname':
+              # 如正在观看,更改昵称显示为当前房间人数状态
               if Obj[someOne]['isWatch']:
-                tabBody[f'LabelFrame_{i}'][f'isWatch_{i}_{j}'].configure(text='退出直播',fg='blue',state='normal')
+                v1=StringVar(value=f"{Obj[someOne]['userCount']}/{Obj[someOne]['total_userCount']}人")
+            case 'authorURL':# 主页
+              v1.set('查看')
+            case 'Living':# 状态
+              v1.set(Obj[someOne]['msg'])
+            case 'isWatch':# 直播 watching
+              if Obj[someOne]['Living']:
+                if Obj[someOne]['isWatch']:
+                  tabBody[f'LabelFrame_{i}'][f'isWatch_{i}_{j}'].configure(text='退出直播',fg='blue',state='normal')
+                else:
+                  v=f"{Obj[someOne]['userCount']}/{Obj[someOne]['total_userCount']}人"
+                  tabBody[f'LabelFrame_{i}'][f'isWatch_{i}_{j}'].configure(text=v,fg='blue',state='normal')
               else:
-                v=f"{Obj[someOne]['userCount']}/{Obj[someOne]['total_userCount']}人"
-                tabBody[f'LabelFrame_{i}'][f'isWatch_{i}_{j}'].configure(text=v,fg='blue',state='normal')
-            else:
-              tabBody[f'LabelFrame_{i}'][f'isWatch_{i}_{j}'].configure(text='',state='disabled')          
-            continue      
-          case 'isRecord':# 录制视频 recoding
-            tabBody[f'LabelFrame_{i}'][f'Radio_{i}'].set(value=Obj[someOne]['recoding'])
-            if Obj[someOne]['Living']:
-              tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(state='normal')
-            else:
-              tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(state='disabled')
-            tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(variable=tabBody[f'LabelFrame_{i}'][f'Radio_{i}'],value=True)
-            continue
-          case 'reCorTime':
-            if Obj[someOne]['Living']:
-              # if Obj[someOne]['isRecord']:
-              if Obj[someOne]['recoding']:
-                try:
-                  ts=str(datetime.now()-Obj[someOne]['rec_stime']).split('.')[0]
-                  v1=StringVar(value=(ts))
-                except KeyError as error:
-                  if error.self.Vis =='rec_stime':
-                    v1=StringVar(value='自动录制尚未开始')
-                  else:
-                    v1=StringVar(error)
+                tabBody[f'LabelFrame_{i}'][f'isWatch_{i}_{j}'].configure(text='',state='disabled')          
+              continue      
+            case 'isRecord':# 录制视频 recoding
+              tabBody[f'LabelFrame_{i}'][f'Radio_{i}'].set(value=Obj[someOne]['recoding'])
+              if Obj[someOne]['Living']:
+                tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(state='normal')
               else:
-                v1=StringVar(value='已开播,未录制视频')
-            else:
-              v1=StringVar(value='')
-        tabBody[f'LabelFrame_{i}'][f'lb_{i}_{j}'].configure(text=v1)
+                tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(state='disabled')
+              tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(variable=tabBody[f'LabelFrame_{i}'][f'Radio_{i}'],value=True)
+              continue
+            case 'reCorTime':
+              if Obj[someOne]['Living']:
+                # if Obj[someOne]['isRecord']:
+                if Obj[someOne]['recoding']:
+                  try:
+                    ts=str(datetime.now()-Obj[someOne]['rec_stime']).split('.')[0]
+                    v1=StringVar(value=(ts))
+                  except KeyError as error:
+                    if error.self.Vis =='rec_stime':
+                      v1=StringVar(value='自动录制尚未开始')
+                    else:
+                      v1=StringVar(error)
+                else:
+                  v1=StringVar(value='已开播,未录制视频')
+              else:
+                v1=StringVar(value='')
+          tabBody[f'LabelFrame_{i}'][f'lb_{i}_{j}'].configure(text=v1)
+    except RuntimeError:
+      print("RuntimeError:",RuntimeError)
+    finally:
+      return

@@ -4,6 +4,7 @@ from core.liveDataProcessing import LiveProcess
 from core.getLoca import getIP
 from re import findall,search,S
 from requests import get
+from requests.exceptions import ReadTimeout,ConnectionError
 from loguru import logger
 
 
@@ -27,10 +28,12 @@ def netWork(url,urlparams=False,times=3):
     else:
       resQ=get(url,headers=header,timeout=times)
       return(resQ.url,'App',resQ.status_code)
-
-def getRoomInfo(url,notes='未添加备注'):
+def getRoomInfo(url,notes='未添加备注',timeOutFlag=False):
   try:
     web_html,mark,status_code=netWork(url)
+    if status_code>400:
+      logger.warning(status_code,web_html)
+      return
     uData=dict()
     if mark=='Web':
       script_str=data_replace(web_html)      
@@ -41,7 +44,6 @@ def getRoomInfo(url,notes='未添加备注'):
       # with open(f'{thisFileP}/{notes}.json','w',encoding='utf-8') as f:
       #   f.write(script_str)
       script_info=json.loads(script_str)
-      webid=script_info['state']['userStore']['odin']['user_unique_id']
       room_info=script_info['state']['roomStore']['roomInfo']
       uData.update({
         'nickname':room_info['anchor']['nickname'],
@@ -51,6 +53,7 @@ def getRoomInfo(url,notes='未添加备注'):
         'web_rid':room_info['web_rid'],
         'city':'未知',
       })
+      webid=script_info['state']['userStore']['odin']['user_unique_id']
       # uData['city']=getIP(uData['sec_uid'],webid)
         # '----------------------------------未开播以下报错-----------------------------------------'
       uData.update({
@@ -124,23 +127,29 @@ def getRoomInfo(url,notes='未添加备注'):
     # thisFileP=Path(__file__).parent.parent
     # import subprocess
     # subprocess.Popen(f'{thisFileP}/ffmpeg/ffplay.exe -nodisp -volume 100 -autoexit -i {thisFileP}/sound/notify_message.mp3')
-    # uData['Living'],uData['msg']=False,'未开播'
-    logger.error(f'{type(e)}:{e}')
+    if type(e)==ReadTimeout or type(e)==ConnectionError:
+      logger.warning(e)
+      timeOutFlag=True
+      return
     uData['Living'],uData['msg']=False,f'{type(e)}'
+  except Exception as e:
+    logger.error(f'==============={e}==============')
   finally:
-    # uData['authorURL']=f'https://www.douyin.com/user/{uData["sec_uid"]}'
-    # return uData
-    try:
+    if timeOutFlag:return timeOutFlag
+    try:  
       uData['authorURL']=f'https://www.douyin.com/user/{uData["sec_uid"]}'
-    except Exception as e:
-      print(e,resqJson,sep='\n')
-    finally:
+      # print(e,resqJson,sep='\n')
       return (uData)
+    except Exception as e:
+      logger.error(e)
+      return
+        
     
 @logger.catch 
 def MonitoringLive(notes,url):
   
   roomInfo=getRoomInfo(url,notes)
+  if not type(roomInfo)==dict: return
   # core.Public_v['Obj'][notes]['nickname']=roomInfo['nickname']
   try:
     core.Public_v['Obj'][notes].update(roomInfo)
@@ -148,7 +157,8 @@ def MonitoringLive(notes,url):
     print(f'{er}被删除')
     return
   except Exception as er:
-    print(er)
+    logger.warning(er)
+    return
   # 控制台输出状态信息
   # notes='：IP:'.join([notes,(roomInfo['city'].split('：')[1] if roomInfo['city'] else roomInfo['city'])])
   # return
