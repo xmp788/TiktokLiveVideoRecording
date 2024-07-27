@@ -45,6 +45,9 @@ def getRoomInfo(url,notes='未添加备注',timeOutFlag=False):
       #   f.write(script_str)
       script_info=json.loads(script_str)
       room_info=script_info['state']['roomStore']['roomInfo']
+      if len(room_info)<3:
+        uData['Living'],uData['nickname']=False,'服务器开小差了,自动重试'        
+        return uData
       uData.update({
         'nickname':room_info['anchor']['nickname'],
         'sec_uid':room_info['anchor']['sec_uid'],
@@ -135,6 +138,7 @@ def getRoomInfo(url,notes='未添加备注',timeOutFlag=False):
   except Exception as e:
     logger.error(f'==============={e}==============')
   finally:
+    if len(uData)==2:return uData
     if timeOutFlag:return timeOutFlag
     try:  
       uData['authorURL']=f'https://www.douyin.com/user/{uData["sec_uid"]}'
@@ -172,6 +176,8 @@ def MonitoringLive(notes,url):
   else:
     try:
       print(f'{(notes+","+roomInfo["city"]):{"`"}{"<"}{26*2}}{roomInfo["msg"]}')
+    except KeyError as e:
+      return
     except Exception as e:
       print(e,roomInfo,sep='\n')
     # print(f'{notes:{"`"}{"<"}{26*2}}{roomInfo["msg"]}')
