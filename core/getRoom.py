@@ -171,8 +171,8 @@ def MonitoringLive(notes,url):
     # print(f'{notes:{"`"}{"<"}{10}}{roomInfo["msg"]},{roomInfo["userCount"]}/{roomInfo["total_userCount"]},{roomInfo["flv_rtmp"]}')
     # if core.Public_v['Obj'][notes]['isRecord'] or core.Public_v['Obj'][notes]['watch']:# 当前主播是否需要录制 控制程序是否需要执行后面代码
       # if core.Public_v['mode']['RecordVideo']: #判断是否启用录制模式
-    info=(notes,roomInfo['nickname'],roomInfo['flv_rtmp'])# 备注，昵称，直播流
-    # LiveProcess(*info)
+    # info=(notes,roomInfo['nickname'],roomInfo['flv_rtmp'])# 备注，昵称，直播流
+    LiveProcess(notes,-1)
   else:
     try:
       print(f'{(notes+","+roomInfo["city"]):{"`"}{"<"}{26*2}}{roomInfo["msg"]}')

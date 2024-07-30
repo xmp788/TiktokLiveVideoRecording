@@ -52,7 +52,9 @@ def getConfig(data):
     # if not List:
     #   with open(f'{thisPath}/MonitoringAddress.json','r',encoding='utf-8') as f:
     #     List=f.readlines()
-    List=data.getData().strip().split('\n')
+    sr=data.getData()
+    if len(sr)==0:continue
+    List=sr.strip().split('\n')
     List=[_ for _ in List if not _.startswith('//')] # 剔除不需要的监听
     # 字典推导式  过滤掉需要监听的列表
     # somebody={f"{No}.{item.strip().split(':',1)[0]}": item.strip().split(':',1)[1] for No,item in enumerate(List,start=1) if '//'not in item.strip().split(':',1)[0]}

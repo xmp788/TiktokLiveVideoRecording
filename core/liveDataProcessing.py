@@ -47,16 +47,16 @@ def RecordingFunc(somebody,nickname,flv_rtmp,msg):# 备注，昵称，直播流
             "-sn","-dn",
             '-max_muxing_queue_size','64',
             str(fileFullname)]
-    print(f'{msg}开始录制视频……')
-    logger.info(f'{msg}开始录制视频……')
+    # print(f'{msg}开始录制视频……')
     try:
       subprocess.Popen(f'{thisFileP}/ffmpeg/ffplay.exe -nodisp -volume 6 -autoexit -i {thisFileP}/sound/notify_message.mp3')
       # 标记正在录制状态,记录录制时间
       obj[somebody]['recoding'],obj[somebody]['rec_stime']=True,datetime.now()
       sub=subprocess.Popen(cmd)
       obj[somebody]['recPID']=sub.pid
+      logger.info(f"\n{msg}开始录制视频……")
       sub.wait()# 录制
-      logger.info(f"{msg}直播结束!停止录制！！！{msg}已成功录制:{datetime.now()-obj[somebody]['rec_stime']}")
+      logger.info(f"\n{msg}直播结束!停止录制！！！已成功录制:{datetime.now()-obj[somebody]['rec_stime']}")
     except Exception as e:
       sr='='
       msg=f'{nickname}{sr*20}>>录制异常:'
@@ -75,7 +75,7 @@ def RecordingFunc(somebody,nickname,flv_rtmp,msg):# 备注，昵称，直播流
 
 def  watching(somebody,nickname,flv_rtmp):
   scrWidth,scrHeight=core.Public_v['scrWidth'],core.Public_v['scrHeight']  # 取出屏幕尺寸
-  x=5
+  x=36
   ffplayCMD=[f'{thisFileP}/ffmpeg/ffplay.exe',
               '-volume',str(2),# 设置直播初始音量
               '-x',f'{x}',# 设置直播画面大小

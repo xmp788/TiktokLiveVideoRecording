@@ -14,9 +14,9 @@ def clicked(event:Event,args):
       case 'checkbox': # 监听自动录制
         isCek=tbody[f'LabelFrame_{cname[1]}'][f'isCheckBox_{cname[1]}'].get()
         tbody[f'LabelFrame_{cname[1]}'][f'isCheckBox_{cname[1]}'].set(not isCek) # 设置选择框
-        tbody[f'LabelFrame_{cname[1]}'][f'Radio_{cname[1]}'].set(not isCek) # 设置录制按扭
+        # tbody[f'LabelFrame_{cname[1]}'][f'Radio_{cname[1]}'].set(not isCek) # 设置录制按扭
         somebody['isRecord']=not isCek
-        somebody['recoding']=not isCek
+        somebody['recoding']=isCek
         return
       case 'isWatch': # 观看直播
         if somebody['Living']:

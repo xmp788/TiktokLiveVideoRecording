@@ -67,10 +67,15 @@ class SetPage():
 
   def addRecod(self):
     """读取已保存文件"""
-    # with open(f'{parentPath}/MonitoringAddress.json','r',encoding='utf-8') as f:
-    #   data=f.readlines()
-    with open(f'{self.parentPath}/MonitoringAddress.pkl','rb') as f:
-      data=pickle.load(f)
+    try:
+      with open(f'{self.parentPath}/MonitoringAddress.pkl','rb') as f:
+        data=pickle.load(f)
+    except FileNotFoundError:
+      try:
+        with open(f'{self.parentPath}/MonitoringAddress.json','r',encoding='utf-8') as f:
+          data=f.readlines()
+      except FileNotFoundError:
+        return
     self.notep.insert(INSERT,''.join(data))
 
   def getData(self) -> list:
@@ -148,7 +153,7 @@ class CreateTable():
   def updateTab(self,parent):
     """更新表行数"""
     Obj=core.Public_v['Obj']
-
+    if not len(Obj):return
     comp=abs(len(self.tabBody)-len(Obj)) # 取绝对值，判断是否需要增删控件。0不需要，否则需要
     for _ in range(comp):
       if len(self.tabBody)>len(Obj):# 减少          
@@ -241,10 +246,11 @@ class CreateTable():
                 tabBody[f'LabelFrame_{i}'][f'isWatch_{i}_{j}'].configure(text='',state='disabled')          
               continue      
             case 'isRecord':# 录制视频 recoding
-              tabBody[f'LabelFrame_{i}'][f'Radio_{i}'].set(value=Obj[someOne]['recoding'])
               if Obj[someOne]['Living']:
+                tabBody[f'LabelFrame_{i}'][f'Radio_{i}'].set(value=Obj[someOne]['recoding'])
                 tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(state='normal')
               else:
+                tabBody[f'LabelFrame_{i}'][f'Radio_{i}'].set(value=Obj[someOne]['isRecord'])
                 tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(state='disabled')
               tabBody[f'LabelFrame_{i}'][f'radio_{i}_{j}'].configure(variable=tabBody[f'LabelFrame_{i}'][f'Radio_{i}'],value=True)
               continue
