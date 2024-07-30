@@ -33,13 +33,13 @@ class SetPage():
  
   def __init__(self,parent:Frame,**kw) -> None:
     self.parentPath=Path(__file__).parent.parent # 获取项目根目录
-    labfr=LabelFrame(parent,text='视频保存位置（鼠标左键双击可更改）')
+    labfr=LabelFrame(parent,text='视频保存位置（鼠标左键双击输入框可更改） 点击"打开文件夹"可打开视频保存文件夹,若不存在将自动创建并打开')
     # Label(labfr,text='视频保存位置：').pack(side='left')
     pth=self.readConfigurationFile()
     self.pth=pth if pth else fr'{self.parentPath}\Video'
     self.vp=Entry(labfr,width=35,text=StringVar(value=self.pth))
     self.vp.pack(side='left',fill='both')
-    # Button(labfr,text='打开',command=self.ck).pack(side='left')
+    Button(labfr,text='打开文件夹',command=self.ck).pack(side='left')
     labfr.pack(fill='x')
 
     labfr=LabelFrame(parent,text='主播直播间列表（备注+直播间地址，// 表示不需要监听的主播）')
@@ -91,6 +91,7 @@ class SetPage():
     string=f'[DouYin]\n{recodpath}'
     with open(f'{self.parentPath}/config.ini','w',encoding='utf-8') as f:
       f.write(string)
+
 class CreateTable():
   """创建表格"""
   def __init__(self,parent:Frame):
