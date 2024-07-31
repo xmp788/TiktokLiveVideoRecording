@@ -4,7 +4,7 @@ from core.liveDataProcessing import LiveProcess
 from core.getLoca import getIP
 from re import findall,search,S
 from requests import get
-from requests.exceptions import ReadTimeout,ConnectionError
+from requests.exceptions import ReadTimeout,ConnectionError,JSONDecodeError
 from loguru import logger
 
 
@@ -131,12 +131,15 @@ def getRoomInfo(url,notes='未添加备注',timeOutFlag=False):
     # import subprocess
     # subprocess.Popen(f'{thisFileP}/ffmpeg/ffplay.exe -nodisp -volume 100 -autoexit -i {thisFileP}/sound/notify_message.mp3')
     if type(e)==ReadTimeout or type(e)==ConnectionError:
-      logger.warning(e)
+      # 超时
+      # logger.warning(e)
       timeOutFlag=True
-      return
-    uData['Living'],uData['msg']=False,f'{type(e)}'
+    elif  type(e)==JSONDecodeError:
+      uData['Living'],uData['nickname']=False,'App获取房间信息时,服务器返回了错误数据'
+    else:
+      logger.error(type(e))
   except Exception as e:
-    logger.error(f'==============={e}==============')
+    logger.error(f'============={e}==============')
   finally:
     if len(uData)==2:return uData
     if timeOutFlag:return timeOutFlag

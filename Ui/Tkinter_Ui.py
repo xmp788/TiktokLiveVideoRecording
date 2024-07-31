@@ -12,7 +12,7 @@ class Ui_MainWindow(Tk):
     super().__init__()
     
   def _win(self,win_width,win_height,xy:str):
-    self.title('抖音直播监听')
+    self.title('直播监听')
     # 获取屏幕大小 
     scrWidth,scrHeight=self.winfo_screenwidth(),self.winfo_screenheight()
     # sizePosition=f'{int(win_width*scrWidth)}x{int(win_height*scrHeight)}{xy}'
